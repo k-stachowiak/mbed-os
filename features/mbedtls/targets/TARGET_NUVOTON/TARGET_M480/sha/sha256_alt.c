@@ -89,24 +89,20 @@ void mbedtls_sha256_clone(mbedtls_sha256_context *dst,
 /*
  * SHA-256 context setup
  */
-int mbedtls_sha256_starts_ext(mbedtls_sha256_context *ctx, int is224)
-{
+void mbedtls_sha256_starts(mbedtls_sha256_context *ctx, int is224)
+{   
     if (ctx->ishw) {
         mbedtls_sha256_hw_starts(&ctx->hw_ctx, is224);
     }
     else {
         mbedtls_sha256_sw_starts(&ctx->sw_ctx, is224);
     }
-
-    return 0;
 }
 
 /*
  * SHA-256 process buffer
  */
-void mbedtls_sha256_update_ext(mbedtls_sha256_context *ctx,
-                               const unsigned char *input,
-                               size_t ilen)
+void mbedtls_sha256_update(mbedtls_sha256_context *ctx, const unsigned char *input, size_t ilen)
 {
     if (ctx->ishw) {
         mbedtls_sha256_hw_update(&ctx->hw_ctx, input, ilen);
@@ -114,15 +110,12 @@ void mbedtls_sha256_update_ext(mbedtls_sha256_context *ctx,
     else {
         mbedtls_sha256_sw_update(&ctx->sw_ctx, input, ilen);
     }
-
-    return 0;
 }
 
 /*
  * SHA-256 final digest
  */
-int mbedtls_sha256_finish_ext(mbedtls_sha256_context *ctx,
-                              unsigned char output[32])
+void mbedtls_sha256_finish(mbedtls_sha256_context *ctx, unsigned char output[32])
 {
     if (ctx->ishw) {
         mbedtls_sha256_hw_finish(&ctx->hw_ctx, output);
@@ -130,12 +123,9 @@ int mbedtls_sha256_finish_ext(mbedtls_sha256_context *ctx,
     else {
         mbedtls_sha256_sw_finish(&ctx->sw_ctx, output);
     }
-
-    return 0;
 }
 
-int mbedtls_internal_sha256_process(mbedtls_sha256_context *ctx,
-                                    const unsigned char data[64])
+void mbedtls_sha256_process(mbedtls_sha256_context *ctx, const unsigned char data[64])
 {
     if (ctx->ishw) {
         mbedtls_sha256_hw_process(&ctx->hw_ctx, data);
@@ -143,8 +133,6 @@ int mbedtls_internal_sha256_process(mbedtls_sha256_context *ctx,
     else {
         mbedtls_sha256_sw_process(&ctx->sw_ctx, data);
     }
-
-    return 0;
 }
 
 #endif /* MBEDTLS_SHA256_ALT */

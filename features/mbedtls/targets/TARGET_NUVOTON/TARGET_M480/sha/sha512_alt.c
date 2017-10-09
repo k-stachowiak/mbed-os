@@ -90,24 +90,20 @@ void mbedtls_sha512_clone(mbedtls_sha512_context *dst,
 /*
  * SHA-512 context setup
  */
-int mbedtls_sha512_starts_ext(mbedtls_sha512_context *ctx, int is384)
-{
+void mbedtls_sha512_starts(mbedtls_sha512_context *ctx, int is384)
+{   
     if (ctx->ishw) {
         mbedtls_sha512_hw_starts(&ctx->hw_ctx, is384);
     }
     else {
         mbedtls_sha512_sw_starts(&ctx->sw_ctx, is384);
     }
-
-    return 0;
 }
 
 /*
  * SHA-512 process buffer
  */
-int mbedtls_sha512_update_ext(mbedtls_sha512_context *ctx,
-                              const unsigned char *input,
-                              size_t ilen)
+void mbedtls_sha512_update(mbedtls_sha512_context *ctx, const unsigned char *input, size_t ilen)
 {
     if (ctx->ishw) {
         mbedtls_sha512_hw_update(&ctx->hw_ctx, input, ilen);
@@ -115,15 +111,12 @@ int mbedtls_sha512_update_ext(mbedtls_sha512_context *ctx,
     else {
         mbedtls_sha512_sw_update(&ctx->sw_ctx, input, ilen);
     }
-
-    return 0;
 }
 
 /*
  * SHA-512 final digest
  */
-int mbedtls_sha512_finish_ext(mbedtls_sha512_context *ctx,
-                              unsigned char output[64])
+void mbedtls_sha512_finish(mbedtls_sha512_context *ctx, unsigned char output[64])
 {
     if (ctx->ishw) {
         mbedtls_sha512_hw_finish(&ctx->hw_ctx, output);
@@ -131,12 +124,9 @@ int mbedtls_sha512_finish_ext(mbedtls_sha512_context *ctx,
     else {
         mbedtls_sha512_sw_finish(&ctx->sw_ctx, output);
     }
-
-    return 0;
 }
 
-int mbedtls_internal_sha512_process(mbedtls_sha512_context *ctx,
-                                    const unsigned char data[128])
+void mbedtls_sha512_process(mbedtls_sha512_context *ctx, const unsigned char data[128])
 {
     if (ctx->ishw) {
         mbedtls_sha512_hw_process(&ctx->hw_ctx, data);
@@ -144,8 +134,6 @@ int mbedtls_internal_sha512_process(mbedtls_sha512_context *ctx,
     else {
         mbedtls_sha512_sw_process(&ctx->sw_ctx, data);
     }
-
-    return 0;
 }
 
 #endif /* MBEDTLS_SHA512_ALT */

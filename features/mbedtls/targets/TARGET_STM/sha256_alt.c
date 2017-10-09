@@ -88,12 +88,12 @@ void mbedtls_sha256_clone( mbedtls_sha256_context *dst,
     *dst = *src;
 }
 
-int mbedtls_sha256_starts_ext( mbedtls_sha256_context *ctx, int is224 )
+void mbedtls_sha256_starts( mbedtls_sha256_context *ctx, int is224 )
 {
     /* HASH IP initialization */
     if (HAL_HASH_DeInit(&ctx->hhash_sha256) == HAL_ERROR) {
         // error found to be returned
-        return 1;
+        return;
     }
 
     ctx->is224 = is224;
@@ -103,45 +103,38 @@ int mbedtls_sha256_starts_ext( mbedtls_sha256_context *ctx, int is224 )
     HASH->CR &= ~HASH_CR_ALGO_Msk;
     if (HAL_HASH_Init(&ctx->hhash_sha256) == HAL_ERROR) {
         // error found to be returned
-        return 1;
+        return;
     }
     if (st_sha256_save_hw_context(ctx) != 1) {
-        return 1; // return HASH_BUSY timeout Error here
+        return; // return HASH_BUSY timeout Error here
     }
-
-    return 0;
 }
 
-int mbedtls_internal_sha256_process( mbedtls_sha256_context *ctx,
-                                      const unsigned char data[ST_SHA256_BLOCK_SIZE] )
+void mbedtls_sha256_process( mbedtls_sha256_context *ctx, const unsigned char data[ST_SHA256_BLOCK_SIZE] )
 {
     if (st_sha256_restore_hw_context(ctx) != 1) {
-        return 1; // Return HASH_BUSY timout error here
+        return; // Return HASH_BUSY timout error here
     }
     if (ctx->is224 == 0) {
         if (HAL_HASHEx_SHA256_Accumulate(&ctx->hhash_sha256, (uint8_t *) data, ST_SHA256_BLOCK_SIZE) != 0) {
-            return 1; // Return error code
+            return; // Return error code
         }
     } else {
         if (HAL_HASHEx_SHA224_Accumulate(&ctx->hhash_sha256, (uint8_t *) data, ST_SHA256_BLOCK_SIZE) != 0) {
-            return 1; // Return error code
+            return; // Return error code
         }
     }
 
     if (st_sha256_save_hw_context(ctx) != 1) {
-        return 1; // return HASH_BUSY timeout Error here
+        return; // return HASH_BUSY timeout Error here
     }
-
-    return 0;
 }
 
-int mbedtls_sha256_update_ext( mbedtls_sha256_context *ctx,
-                               const unsigned char *input,
-                               size_t ilen )
+void mbedtls_sha256_update( mbedtls_sha256_context *ctx, const unsigned char *input, size_t ilen )
 {
     size_t currentlen = ilen;
     if (st_sha256_restore_hw_context(ctx) != 1) {
-        return 1; // Return HASH_BUSY timout error here
+        return; // Return HASH_BUSY timout error here
     }
 
     // store mechanism to accumulate ST_SHA256_BLOCK_SIZE bytes (512 bits) in the HW
@@ -170,11 +163,11 @@ int mbedtls_sha256_update_ext( mbedtls_sha256_context *ctx,
         if (iter !=0) {
             if (ctx->is224 == 0) {
                 if (HAL_HASHEx_SHA256_Accumulate(&ctx->hhash_sha256, (uint8_t *)(input + ST_SHA256_BLOCK_SIZE - ctx->sbuf_len),  (iter * ST_SHA256_BLOCK_SIZE)) != 0) {
-                    return 1; // Return error code here
+                    return; // Return error code here
                 }
             } else {
                 if (HAL_HASHEx_SHA224_Accumulate(&ctx->hhash_sha256, (uint8_t *)(input + ST_SHA256_BLOCK_SIZE - ctx->sbuf_len),  (iter * ST_SHA256_BLOCK_SIZE)) != 0) {
-                    return 1; // Return error code here
+                    return; // Return error code here
                 }
             }
         }
@@ -185,25 +178,23 @@ int mbedtls_sha256_update_ext( mbedtls_sha256_context *ctx,
         }
     }
     if (st_sha256_save_hw_context(ctx) != 1) {
-        return 1; // return HASH_BUSY timeout Error here
+        return; // return HASH_BUSY timeout Error here
     }
-
-    return 0;
 }
 
-int mbedtls_sha256_finish_ext( mbedtls_sha256_context *ctx, unsigned char output[32] )
+void mbedtls_sha256_finish( mbedtls_sha256_context *ctx, unsigned char output[32] )
 {
     if (st_sha256_restore_hw_context(ctx) != 1) {
-        return 1; // Return HASH_BUSY timout error here
+        return; // Return HASH_BUSY timout error here
     }
     if (ctx->sbuf_len > 0) {
         if (ctx->is224 == 0) {
             if (HAL_HASHEx_SHA256_Accumulate(&ctx->hhash_sha256, ctx->sbuf, ctx->sbuf_len) != 0) {
-                return 1; // Return error code here
+                return; // Return error code here
             }
         } else {
             if (HAL_HASHEx_SHA224_Accumulate(&ctx->hhash_sha256, ctx->sbuf, ctx->sbuf_len) != 0) {
-                return 1; // Return error code here
+                return; // Return error code here
             }
         }
     }
@@ -213,18 +204,16 @@ int mbedtls_sha256_finish_ext( mbedtls_sha256_context *ctx, unsigned char output
 
     if (ctx->is224 == 0) {
         if (HAL_HASHEx_SHA256_Finish(&ctx->hhash_sha256, output, 10) != 0) {
-            return 1; // Return error code here
+            return; // Return error code here
         }
     } else {
         if (HAL_HASHEx_SHA224_Finish(&ctx->hhash_sha256, output, 10) != 0) {
-            return 1; // Return error code here
+            return; // Return error code here
         }
     }
     if (st_sha256_save_hw_context(ctx) != 1) {
-        return 1; // return HASH_BUSY timeout Error here
+        return; // return HASH_BUSY timeout Error here
     }
-
-    return 0;
 }
 
 #endif /*MBEDTLS_SHA256_ALT*/
