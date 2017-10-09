@@ -168,13 +168,13 @@ int mbedtls_x509_csr_parse_der( mbedtls_x509_csr *csr,
         return( ret );
     }
 
-    if( csr->version != 0 )
+    csr->version++;
+
+    if( csr->version != 1 )
     {
         mbedtls_x509_csr_free( csr );
         return( MBEDTLS_ERR_X509_UNKNOWN_VERSION );
     }
-
-    csr->version++;
 
     /*
      *  subject               Name

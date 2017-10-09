@@ -90,12 +90,12 @@ void mbedtls_md5_clone( mbedtls_md5_context *dst,
     *dst = *src;
 }
 
-void mbedtls_md5_starts( mbedtls_md5_context *ctx )
+int mbedtls_md5_starts_ext( mbedtls_md5_context *ctx )
 {
     /* HASH IP initialization */
     if (HAL_HASH_DeInit(&ctx->hhash_md5) != 0) {
         // error found to be returned
-        return;
+        return 1;
     }
 
     /* HASH Configuration */
@@ -104,31 +104,38 @@ void mbedtls_md5_starts( mbedtls_md5_context *ctx )
     HASH->CR &= ~HASH_CR_ALGO_Msk;
     if (HAL_HASH_Init(&ctx->hhash_md5) != 0) {
         // return error code
-        return;
+        return 1;
     }
     if (st_md5_save_hw_context(ctx) != 1) {
-        return; // return HASH_BUSY timeout Error here
+        return 1; // return HASH_BUSY timeout Error here
     }
+
+    return 0;
 }
 
-void mbedtls_md5_process( mbedtls_md5_context *ctx, const unsigned char data[ST_MD5_BLOCK_SIZE] )
+int mbedtls_internal_md5_process( mbedtls_md5_context *ctx,
+                                  const unsigned char data[ST_MD5_BLOCK_SIZE] )
 {
     if (st_md5_restore_hw_context(ctx) != 1) {
-        return; // Return HASH_BUSY timout error here
+        return 1; // Return HASH_BUSY timout error here
     }
     if (HAL_HASH_MD5_Accumulate(&ctx->hhash_md5, (uint8_t *)data, ST_MD5_BLOCK_SIZE) != 0) {
-        return; // Return error code here
+        return 1; // Return error code here
     }
     if (st_md5_save_hw_context(ctx) != 1) {
-        return; // return HASH_BUSY timeout Error here
+        return 1; // return HASH_BUSY timeout Error here
     }
+
+    return 0;
 }
 
-void mbedtls_md5_update( mbedtls_md5_context *ctx, const unsigned char *input, size_t ilen )
+int mbedtls_md5_update_ext( mbedtls_md5_context *ctx,
+                            const unsigned char *input,
+                            size_t ilen )
 {
     size_t currentlen = ilen;
     if (st_md5_restore_hw_context(ctx) != 1) {
-        return; // Return HASH_BUSY timout error here
+        return 1; // Return HASH_BUSY timout error here
     }
     // store mechanism to accumulate ST_MD5_BLOCK_SIZE bytes (512 bits) in the HW
     if (currentlen == 0){ // only change HW status is size if 0
@@ -151,7 +158,7 @@ void mbedtls_md5_update( mbedtls_md5_context *ctx, const unsigned char *input, s
         size_t iter = currentlen / ST_MD5_BLOCK_SIZE;
         if (iter !=0) {
             if (HAL_HASH_MD5_Accumulate(&ctx->hhash_md5, (uint8_t *)(input + ST_MD5_BLOCK_SIZE - ctx->sbuf_len), (iter * ST_MD5_BLOCK_SIZE)) != 0) {
-                return; // Return error code here
+                return 1; // Return error code here
             }
         }
         // sbuf is completely accumulated, now copy up to 63 remaining bytes
@@ -161,18 +168,21 @@ void mbedtls_md5_update( mbedtls_md5_context *ctx, const unsigned char *input, s
         }
     }
     if (st_md5_save_hw_context(ctx) != 1) {
-        return; // return HASH_BUSY timeout Error here
+        return 1; // return HASH_BUSY timeout Error here
     }
+
+    return 0;
 }
 
-void mbedtls_md5_finish( mbedtls_md5_context *ctx, unsigned char output[16] )
+int mbedtls_md5_finish_ext( mbedtls_md5_context *ctx,
+                             unsigned char output[16] )
 {
     if (st_md5_restore_hw_context(ctx) != 1) {
-        return; // Return HASH_BUSY timout error here
+        return 1; // Return HASH_BUSY timout error here
     }
     if (ctx->sbuf_len > 0) {
         if (HAL_HASH_MD5_Accumulate(&ctx->hhash_md5, ctx->sbuf, ctx->sbuf_len) != 0) {
-            return; // Return error code here
+            return 1; // Return error code here
         }
     }
     mbedtls_zeroize( ctx->sbuf, ST_MD5_BLOCK_SIZE);
@@ -180,11 +190,13 @@ void mbedtls_md5_finish( mbedtls_md5_context *ctx, unsigned char output[16] )
     __HAL_HASH_START_DIGEST();
 
     if (HAL_HASH_MD5_Finish(&ctx->hhash_md5, output, 10)) {
-        // error code to be returned
+        return 1; // error code to be returned
     }
     if (st_md5_save_hw_context(ctx) != 1) {
-        return; // return HASH_BUSY timeout Error here
+        return 1; // return HASH_BUSY timeout Error here
     }
+
+    return 0;
 }
 
 #endif /* MBEDTLS_MD5_ALT */

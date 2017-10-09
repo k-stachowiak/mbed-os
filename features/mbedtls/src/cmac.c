@@ -169,10 +169,10 @@ static void cmac_xor_block( unsigned char *output, const unsigned char *input1,
                             const unsigned char *input2,
                             const size_t block_size )
 {
-    size_t idx;
+    size_t index;
 
-    for( idx = 0; idx < block_size; idx++ )
-        output[ idx ] = input1[ idx ] ^ input2[ idx ];
+    for( index = 0; index < block_size; index++ )
+        output[ index ] = input1[ index ] ^ input2[ index ];
 }
 
 /*
