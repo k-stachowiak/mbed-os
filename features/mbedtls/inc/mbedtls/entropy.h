@@ -121,7 +121,6 @@ mbedtls_entropy_source_state;
  */
 typedef struct
 {
-    int accumulator_started;
 #if defined(MBEDTLS_ENTROPY_SHA512_ACCUMULATOR)
     mbedtls_sha512_context  accumulator;
 #else

@@ -177,11 +177,8 @@ int mbedtls_x509write_crt_set_subject_key_identifier( mbedtls_x509write_cert *ct
     memset( buf, 0, sizeof(buf) );
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_pk_write_pubkey( &c, buf, ctx->subject_key ) );
 
-    ret = mbedtls_sha1_ext( buf + sizeof( buf ) - len, len,
-                            buf + sizeof( buf ) - 20 );
-    if( ret != 0 )
-        return( ret );
-    c = buf + sizeof( buf ) - 20;
+    mbedtls_sha1( buf + sizeof(buf) - len, len, buf + sizeof(buf) - 20 );
+    c = buf + sizeof(buf) - 20;
     len = 20;
 
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( &c, buf, len ) );
@@ -202,11 +199,8 @@ int mbedtls_x509write_crt_set_authority_key_identifier( mbedtls_x509write_cert *
     memset( buf, 0, sizeof(buf) );
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_pk_write_pubkey( &c, buf, ctx->issuer_key ) );
 
-    ret = mbedtls_sha1_ext( buf + sizeof( buf ) - len, len,
-                            buf + sizeof( buf ) - 20 );
-    if( ret != 0 )
-        return( ret );
-    c = buf + sizeof( buf ) - 20;
+    mbedtls_sha1( buf + sizeof(buf) - len, len, buf + sizeof(buf) - 20 );
+    c = buf + sizeof(buf) - 20;
     len = 20;
 
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( &c, buf, len ) );
@@ -270,7 +264,7 @@ int mbedtls_x509write_crt_set_ns_cert_type( mbedtls_x509write_cert *ctx,
 }
 
 static int x509_write_time( unsigned char **p, unsigned char *start,
-                            const char *time, size_t size )
+                            const char *t, size_t size )
 {
     int ret;
     size_t len = 0;
@@ -278,10 +272,10 @@ static int x509_write_time( unsigned char **p, unsigned char *start,
     /*
      * write MBEDTLS_ASN1_UTC_TIME if year < 2050 (2 bytes shorter)
      */
-    if( time[0] == '2' && time[1] == '0' && time [2] < '5' )
+    if( t[0] == '2' && t[1] == '0' && t[2] < '5' )
     {
         MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_raw_buffer( p, start,
-                                             (const unsigned char *) time + 2,
+                                             (const unsigned char *) t + 2,
                                              size - 2 ) );
         MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
         MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_UTC_TIME ) );
@@ -289,7 +283,7 @@ static int x509_write_time( unsigned char **p, unsigned char *start,
     else
     {
         MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_raw_buffer( p, start,
-                                                  (const unsigned char *) time,
+                                                  (const unsigned char *) t,
                                                   size ) );
         MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( p, start, len ) );
         MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( p, start, MBEDTLS_ASN1_GENERALIZED_TIME ) );
@@ -404,11 +398,7 @@ int mbedtls_x509write_crt_der( mbedtls_x509write_cert *ctx, unsigned char *buf, 
     /*
      * Make signature
      */
-    if( ( ret = mbedtls_md( mbedtls_md_info_from_type( ctx->md_alg ), c,
-                            len, hash ) ) != 0 )
-    {
-        return( ret );
-    }
+    mbedtls_md( mbedtls_md_info_from_type( ctx->md_alg ), c, len, hash );
 
     if( ( ret = mbedtls_pk_sign( ctx->issuer_key, ctx->md_alg, hash, 0, sig, &sig_len,
                          f_rng, p_rng ) ) != 0 )
